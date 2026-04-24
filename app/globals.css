@@ -1,0 +1,140 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* ── Design Tokens + shadcn mapping — single source of truth ── */
+:root {
+  /* Brand Colors — taupe palette */
+  --color-brand-1: #2c2420;
+  --color-brand-2: #7c6a5e;
+  --color-brand-3: #a89080;
+  --color-brand-4: #c4b0a4;
+  --color-brand-5: #faf7f5;
+
+  /* Semantic Colors */
+  --color-primary: var(--color-brand-2);
+  --color-primary-hover: #5c4e44;
+  --color-secondary: var(--color-brand-3);
+  --color-tertiary: var(--color-brand-4);
+  --color-background: var(--color-brand-5);
+  --color-surface: #ffffff;
+  --color-border: #e8ddd8;
+  --color-foreground: var(--color-brand-1);
+  --color-muted: #6b5c52;
+  --color-muted-foreground: #9c8880;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
+  /* shadcn token mapping */
+  --background: var(--color-background);
+  --foreground: var(--color-foreground);
+  --card: var(--color-surface);
+  --card-foreground: var(--color-foreground);
+  --popover: var(--color-surface);
+  --popover-foreground: var(--color-foreground);
+  --primary: var(--color-primary);
+  --primary-foreground: var(--color-brand-5);
+  --secondary: var(--color-secondary);
+  --secondary-foreground: var(--color-brand-5);
+  --muted: var(--color-border);
+  --muted-foreground: var(--color-muted-foreground);
+  --accent: #f0e8e4;
+  --accent-foreground: var(--color-brand-1);
+  --destructive: var(--color-error);
+  --border: var(--color-border);
+  --input: var(--color-border);
+  --ring: var(--color-primary);
+  --radius: 0.5rem;
+
+  /* Sidebar tokens — reference brand colors directly */
+  --sidebar: var(--color-brand-4);
+  --sidebar-foreground: var(--color-brand-1);
+  --sidebar-primary: var(--color-brand-1);
+  --sidebar-primary-foreground: var(--color-brand-4);
+  --sidebar-accent: var(--color-brand-3);
+  --sidebar-accent-foreground: var(--color-brand-5);
+  --sidebar-border: var(--color-brand-3);
+  --sidebar-ring: var(--color-brand-1);
+}
+
+/* Dark mode not implemented — tokens will be added here when dark mode is scoped */
+
+@theme inline {
+  /* Wire next/font CSS variables (injected on <html>) into Tailwind's theme.
+     next/font injects --font-sans, --font-secondary, --font-mono on the <html> element. */
+  --font-heading: var(--font-sans);
+  --font-sans: var(--font-sans);
+  --font-secondary: var(--font-secondary);
+  --font-mono: var(--font-mono);
+
+  /* Colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-tertiary: var(--color-tertiary);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Radius */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+
+  /* Sidebar — point directly to brand vars so Tailwind 4 can resolve them */
+  --color-sidebar: var(--color-brand-4);
+  --color-sidebar-foreground: var(--color-brand-1);
+  --color-sidebar-primary: var(--color-brand-1);
+  --color-sidebar-primary-foreground: var(--color-brand-4);
+  --color-sidebar-accent: var(--color-brand-3);
+  --color-sidebar-accent-foreground: var(--color-brand-5);
+  --color-sidebar-border: var(--color-brand-3);
+  --color-sidebar-ring: var(--color-brand-1);
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* HACK: Safari mobile dvh fallback */
+.min-h-screen-safe {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
