@@ -4,5 +4,9 @@ export interface GetAllUsersViewModel {
   email: string
   groups: string[]
   scopes: string[]
+  failedLoginAttempts: number
+  blockedAt: string | null
+  blockedBy: string | null
+  isBlocked: boolean
   createdAt: string
 }

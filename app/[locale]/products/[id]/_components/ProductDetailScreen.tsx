@@ -1,21 +1,18 @@
+import { ExternalLinkIcon } from 'lucide-react'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { PRODUCT_IMAGE_BLUR_DATA_URL } from '@/constants/images'
 import { Routes } from '@/constants/routes'
 import { GetProductDetailsUseCase, ShopifyClient } from '@/features/products'
+import { MbeClient } from '@/features/products/client/MbeClient'
+import { GetAllMbeProductVariantService } from '@/features/products/service/GetAllMbeProductVariantService'
 import { Link } from '@/lib/navigation'
+
+import { ProductVariantsTable } from './ProductVariantsTable'
 
 interface ProductDetailScreenProps {
   readonly id: string
@@ -28,7 +25,8 @@ interface ProductDetailScreenProps {
 export async function ProductDetailScreen({ id }: ProductDetailScreenProps) {
   const t = await getTranslations('ProductDetailPage')
 
-  const useCase = new GetProductDetailsUseCase(new ShopifyClient())
+  const mbeService = new GetAllMbeProductVariantService(new MbeClient())
+  const useCase = new GetProductDetailsUseCase(new ShopifyClient(), mbeService)
   const product = await useCase.execute(id)
 
   if (!product) notFound()
@@ -112,20 +110,65 @@ export async function ProductDetailScreen({ id }: ProductDetailScreenProps) {
             <div>
               <h2 className="text-foreground mb-2 text-sm font-semibold">{t('optionsTitle')}</h2>
               <div className="flex flex-col gap-3">
-                {product.options.map((option) => (
-                  <div key={option.name}>
-                    <p className="text-muted-foreground mb-1.5 text-xs font-medium">
-                      {option.name}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {option.values.map((value) => (
-                        <Badge key={value} variant="outline" className="text-xs">
-                          {value}
-                        </Badge>
-                      ))}
+                {product.options.map((option) => {
+                  // Check if this is a Color option and we have variant images
+                  const isColorOption = option.name.toLowerCase() === 'color'
+                  const colorImages = isColorOption
+                    ? new Map<string, string>(
+                        product.variants
+                          .filter((v) => v.imageUrl)
+                          .map((v) => {
+                            const colorValue = v.selectedOptions.find(
+                              (opt) => opt.name.toLowerCase() === 'color'
+                            )?.value
+                            return colorValue ? [colorValue, v.imageUrl!] : null
+                          })
+                          .filter((entry): entry is [string, string] => entry !== null)
+                      )
+                    : null
+
+                  return (
+                    <div key={option.name}>
+                      <p className="text-muted-foreground mb-1.5 text-xs font-medium">
+                        {option.name}
+                      </p>
+                      {isColorOption && colorImages && colorImages.size > 0 ? (
+                        <div className="flex flex-wrap gap-3">
+                          {option.values.map((value) => {
+                            const imageUrl = colorImages.get(value)
+                            return (
+                              <div key={value} className="flex flex-col items-center gap-1.5">
+                                {imageUrl && (
+                                  <div className="relative size-16 overflow-hidden rounded-lg border border-[var(--color-border)]">
+                                    <Image
+                                      src={imageUrl}
+                                      alt={value}
+                                      fill
+                                      sizes="64px"
+                                      quality={75}
+                                      className="object-cover"
+                                    />
+                                  </div>
+                                )}
+                                <Badge variant="outline" className="text-xs">
+                                  {value}
+                                </Badge>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5">
+                          {option.values.map((value) => (
+                            <Badge key={value} variant="outline" className="text-xs">
+                              {value}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
@@ -151,66 +194,7 @@ export async function ProductDetailScreen({ id }: ProductDetailScreenProps) {
       {/* Variants & inventory table */}
       <Card>
         <CardContent className="p-0">
-          <h2 className="text-foreground p-4 pb-0 text-base font-semibold">{t('variantsTitle')}</h2>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('columnVariant')}</TableHead>
-                <TableHead>{t('columnSku')}</TableHead>
-                <TableHead>{t('columnBarcode')}</TableHead>
-                <TableHead>{t('columnLocation')}</TableHead>
-                <TableHead className="text-right">{t('columnAvailable')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {product.variants.map((variant) =>
-                variant.inventoryLevels.length === 0 ? (
-                  <TableRow key={variant.id}>
-                    <TableCell className="font-medium">{variant.title}</TableCell>
-                    <TableCell className="font-mono text-sm">{variant.sku}</TableCell>
-                    <TableCell className="font-mono text-sm">{variant.barcode ?? '—'}</TableCell>
-                    <TableCell className="text-muted-foreground text-sm">—</TableCell>
-                    <TableCell className="text-right font-mono text-sm">
-                      {variant.totalAvailable}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  variant.inventoryLevels.map((level, i) => (
-                    <TableRow key={`${variant.id}-${level.locationName}`}>
-                      {i === 0 && (
-                        <>
-                          <TableCell
-                            className="font-medium"
-                            rowSpan={variant.inventoryLevels.length}
-                          >
-                            {variant.title}
-                          </TableCell>
-                          <TableCell
-                            className="font-mono text-sm"
-                            rowSpan={variant.inventoryLevels.length}
-                          >
-                            {variant.sku}
-                          </TableCell>
-                          <TableCell
-                            className="font-mono text-sm"
-                            rowSpan={variant.inventoryLevels.length}
-                          >
-                            {variant.barcode ?? '—'}
-                          </TableCell>
-                        </>
-                      )}
-                      <TableCell className="text-muted-foreground text-sm">
-                        {level.locationName}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-sm">
-                        {level.availableQuantity}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )
-              )}
-            </TableBody>
-          </Table>
+          <ProductVariantsTable variants={product.variants} productTitle={product.title} />
         </CardContent>
       </Card>
     </section>

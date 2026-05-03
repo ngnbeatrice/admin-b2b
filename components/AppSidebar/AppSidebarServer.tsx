@@ -17,25 +17,27 @@ export async function AppSidebarServer() {
     getCurrentUserScopes(),
   ])
 
+  const canSeeRetail = userScopes.includes(Scopes.USERS_WRITE)
   const canSeeB2B = userScopes.includes(Scopes.USERS_WRITE)
   const canSeeUsers = userScopes.includes(Scopes.SETTINGS_WRITE)
   const canSeeSecurity = userScopes.includes(Scopes.SETTINGS_WRITE)
 
-  const nav: AppSidebarLabels['nav'] = [
-    {
+  const nav: AppSidebarLabels['nav'] = []
+
+  if (canSeeRetail) {
+    nav.push({
       label: tNav('retail'),
       icon: <ShoppingBagIcon className="size-4" />,
       items: [{ label: tNav('inventory'), url: Routes.retailProducts }],
-    },
-  ]
+    })
+  }
 
   if (canSeeB2B) {
     nav.push({
       label: tNav('b2b'),
       icon: <BuildingIcon className="size-4" />,
       items: [
-        { label: tNav('ss27Collections'), url: Routes.b2bSS27Collections },
-        { label: tNav('ss27Products'), url: Routes.b2bSS27Products },
+        { label: tNav('mbeOrderHistory'), url: Routes.b2bMbeOrderHistory },
         { label: tNav('createOrder'), url: Routes.b2bCreateOrder },
         { label: tNav('orderHistory'), url: Routes.b2bOrderHistory },
       ],

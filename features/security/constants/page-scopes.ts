@@ -34,13 +34,13 @@ export const PAGE_DEFINITIONS: PageDefinition[] = [
     path: '/retail/products',
     menuGroup: 'Retail',
     menuLabel: 'Inventory',
-    requiredScopes: [],
+    requiredScopes: [Scopes.USERS_WRITE],
   },
   {
     path: '/retail/products/[id]',
     menuGroup: 'Retail',
     menuLabel: 'Product Detail',
-    requiredScopes: [],
+    requiredScopes: [Scopes.USERS_WRITE],
   },
   {
     path: '/settings/profile',
@@ -61,15 +61,9 @@ export const PAGE_DEFINITIONS: PageDefinition[] = [
     requiredScopes: [Scopes.SETTINGS_WRITE],
   },
   {
-    path: '/b2b/ss27/collections',
+    path: '/b2b/mbe-order-history',
     menuGroup: 'B2B',
-    menuLabel: 'SS27 Collections',
-    requiredScopes: [Scopes.USERS_WRITE],
-  },
-  {
-    path: '/b2b/ss27/products',
-    menuGroup: 'B2B',
-    menuLabel: 'SS27 Products',
+    menuLabel: 'MBE order history',
     requiredScopes: [Scopes.USERS_WRITE],
   },
   {

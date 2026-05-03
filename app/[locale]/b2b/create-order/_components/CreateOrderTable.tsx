@@ -57,7 +57,9 @@ export function CreateOrderTable({ products }: CreateOrderTableProps) {
 
   const allSkus = useMemo(
     () =>
-      [...new Set(products.flatMap((p) => p.variants.map((v) => v.sku)).filter(Boolean))].sort(),
+      [
+        ...new Set(products.flatMap((p) => p.variants.map((v) => v.shopifySku)).filter(Boolean)),
+      ].sort(),
     [products]
   )
 
@@ -76,7 +78,7 @@ export function CreateOrderTable({ products }: CreateOrderTableProps) {
 
   const allVariantTitles = useMemo(
     () =>
-      [...new Set(products.flatMap((p) => p.variants.map((v) => v.title)))].sort((a, b) =>
+      [...new Set(products.flatMap((p) => p.variants.map((v) => v.shopifyTitle)))].sort((a, b) =>
         a.localeCompare(b)
       ),
     [products]
@@ -118,7 +120,7 @@ export function CreateOrderTable({ products }: CreateOrderTableProps) {
         titleInput.trim() === '' || p.title.toLowerCase().includes(titleInput.trim().toLowerCase())
       const skuMatch =
         skuInput.trim() === '' ||
-        p.variants.some((v) => v.sku?.toLowerCase().includes(skuInput.trim().toLowerCase()))
+        p.variants.some((v) => v.shopifySku?.toLowerCase().includes(skuInput.trim().toLowerCase()))
       const collectionMatch =
         collectionInput.trim() === '' ||
         p.collections.some((c) =>
@@ -129,7 +131,9 @@ export function CreateOrderTable({ products }: CreateOrderTableProps) {
         p.tags.some((tag) => tag.toLowerCase().includes(tagInput.trim().toLowerCase()))
       const variantMatch =
         variantInput.trim() === '' ||
-        p.variants.some((v) => v.title.toLowerCase().includes(variantInput.trim().toLowerCase()))
+        p.variants.some((v) =>
+          v.shopifyTitle.toLowerCase().includes(variantInput.trim().toLowerCase())
+        )
 
       // Stock filtering: always respect the toggle
       const stockMatch = showOutOfStock || p.inStock
@@ -152,7 +156,7 @@ export function CreateOrderTable({ products }: CreateOrderTableProps) {
   const getProductPrice = (product: GetAllProductsForCreateOrderViewModel): string => {
     if (product.variants.length === 0) return '—'
 
-    const uniquePrices = [...new Set(product.variants.map((v) => v.price))]
+    const uniquePrices = [...new Set(product.variants.map((v) => v.shopifyPrice))]
 
     if (uniquePrices.length === 1) {
       const price = parseFloat(uniquePrices[0])
@@ -168,7 +172,7 @@ export function CreateOrderTable({ products }: CreateOrderTableProps) {
   /** Check if product has multiple different prices */
   const hasMultiplePrices = (product: GetAllProductsForCreateOrderViewModel): boolean => {
     if (product.variants.length === 0) return false
-    const uniquePrices = [...new Set(product.variants.map((v) => v.price))]
+    const uniquePrices = [...new Set(product.variants.map((v) => v.shopifyPrice))]
     return uniquePrices.length > 1
   }
 
@@ -177,7 +181,7 @@ export function CreateOrderTable({ products }: CreateOrderTableProps) {
     (product: GetAllProductsForCreateOrderViewModel): number => {
       return product.variants.reduce((sum, variant) => {
         const qty = quantities[variant.id] ?? 0
-        const price = parseFloat(variant.price)
+        const price = parseFloat(variant.shopifyPrice)
         return sum + qty * price
       }, 0)
     },
@@ -211,13 +215,13 @@ export function CreateOrderTable({ products }: CreateOrderTableProps) {
       product.variants.forEach((variant) => {
         const qty = quantities[variant.id] ?? 0
         if (qty > 0) {
-          const price = parseFloat(variant.price)
+          const price = parseFloat(variant.shopifyPrice)
           items.push({
             productId: product.id,
             productTitle: product.title,
             productImage: product.featuredImageUrl,
             variantId: variant.id,
-            variantTitle: variant.title,
+            variantTitle: variant.shopifyTitle,
             quantity: qty,
             price,
             total: qty * price,
@@ -524,16 +528,19 @@ export function CreateOrderTable({ products }: CreateOrderTableProps) {
                         <TableCell>
                           <TooltipProvider>
                             <Tooltip>
-                              <TooltipTrigger asChild>
-                                <a
-                                  href={Routes.retailProduct(product.numericId)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="hover:bg-accent hover:text-accent-foreground inline-flex h-9 w-9 items-center justify-center rounded-md"
-                                >
-                                  <EyeIcon className="h-4 w-4" />
-                                </a>
-                              </TooltipTrigger>
+                              <TooltipTrigger
+                                render={(props) => (
+                                  <a
+                                    {...props}
+                                    href={Routes.retailProduct(product.numericId)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:bg-accent hover:text-accent-foreground inline-flex h-9 w-9 items-center justify-center rounded-md"
+                                  >
+                                    <EyeIcon className="h-4 w-4" />
+                                  </a>
+                                )}
+                              />
                               <TooltipContent>
                                 <p>{t('viewProduct')}</p>
                               </TooltipContent>
@@ -562,7 +569,7 @@ export function CreateOrderTable({ products }: CreateOrderTableProps) {
                               const formattedPrice = new Intl.NumberFormat('fr-FR', {
                                 style: 'currency',
                                 currency: 'EUR',
-                              }).format(parseFloat(v.price))
+                              }).format(parseFloat(v.shopifyPrice))
 
                               return (
                                 <div key={v.id} className="flex items-center gap-2">
@@ -583,7 +590,7 @@ export function CreateOrderTable({ products }: CreateOrderTableProps) {
                                       isVariantSelected ? 'font-bold text-[#10b981]' : ''
                                     }`}
                                   >
-                                    {v.title}
+                                    {v.shopifyTitle}
                                     <span
                                       className={`ml-1 text-xs ${
                                         isVariantSelected
@@ -591,7 +598,7 @@ export function CreateOrderTable({ products }: CreateOrderTableProps) {
                                           : 'text-muted-foreground'
                                       }`}
                                     >
-                                      ({v.inventoryQuantity})
+                                      ({v.shopifyInventoryQuantity})
                                     </span>
                                     {showPriceInVariant && (
                                       <span

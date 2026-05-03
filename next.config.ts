@@ -4,11 +4,13 @@ import createNextIntlPlugin from 'next-intl/plugin'
 const withNextIntl = createNextIntlPlugin('./lib/i18n.ts')
 
 const nextConfig: NextConfig = {
+  // Disable React Strict Mode to prevent double-rendering in development
+  // Strict Mode causes Server Components to render twice, leading to duplicate API calls
+  reactStrictMode: false,
+  // ⚠️ WARNING: Skips type checking during build
+  // Only use temporarily - fix TypeScript errors ASAP
   typescript: {
     ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
   },
   trailingSlash: false,
   images: {

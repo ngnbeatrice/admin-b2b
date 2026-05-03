@@ -1,4 +1,4 @@
-import { MailIcon, CalendarIcon, ShieldCheckIcon, LayersIcon } from 'lucide-react'
+import { MailIcon, CalendarIcon, ShieldCheckIcon, LayersIcon, UserIcon } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 
 import { Badge } from '@/components/ui/badge'
@@ -19,6 +19,16 @@ export async function UserDetailsCard({ user }: UserDetailsCardProps) {
         <CardTitle className="text-base">{t('title')}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
+        {/* Name */}
+        {(user.firstName || user.lastName) && (
+          <div className="flex items-center gap-3">
+            <UserIcon size={16} className="text-muted-foreground shrink-0" />
+            <span className="text-sm font-medium">
+              {[user.firstName, user.lastName].filter(Boolean).join(' ')}
+            </span>
+          </div>
+        )}
+
         {/* Email */}
         <div className="flex items-center gap-3">
           <MailIcon size={16} className="text-muted-foreground shrink-0" />

@@ -3,9 +3,11 @@ import { env } from '@/lib/env'
 import type {
   ShopifyAuthResponseDTO,
   ShopifyCheckSkuResponseDTO,
+  ShopifyGetSkuProductsResponseDTO,
   ShopifyProductDetailResponseDTO,
   ShopifyProductsCountResponseDTO,
   ShopifyProductsResponseDTO,
+  ShopifySkuProductDTO,
 } from './dto/ShopifyProductDTO'
 
 const SHOPIFY_API_URL = `${env.SHOPIFY_STORE_URL}/admin/api/2026-04/graphql.json`
@@ -76,6 +78,7 @@ export class ShopifyClient {
           node {
             id
             title
+            status
             tags
             collections(first: 50) {
               edges {
@@ -95,10 +98,21 @@ export class ShopifyClient {
                   id
                   title
                   sku
-                  inventoryQuantity
                   price
                   image {
                     url
+                  }
+                  inventoryItem {
+                    inventoryLevels(first: 1) {
+                      edges {
+                        node {
+                          quantities(names: ["on_hand"]) {
+                            name
+                            quantity
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -148,6 +162,9 @@ export class ShopifyClient {
                 name
                 value
               }
+              image {
+                url
+              }
               inventoryItem {
                 inventoryLevels(first: 5) {
                   edges {
@@ -155,7 +172,7 @@ export class ShopifyClient {
                       location {
                         name
                       }
-                      quantities(names: ["available"]) {
+                      quantities(names: ["committed", "available", "on_hand"]) {
                         name
                         quantity
                       }
@@ -180,5 +197,33 @@ export class ShopifyClient {
       }
     }`
     return this.graphql<ShopifyCheckSkuResponseDTO>(query)
+  }
+
+  /** Fetches product IDs and image URLs for a list of SKUs. Returns an array of SKU-product mappings. */
+  async getSkuProducts(skus: string[]): Promise<ShopifySkuProductDTO[]> {
+    const skuQuery = skus.map((s) => `sku:${s}`).join(' OR ')
+    const query = `{
+      productVariants(first: 250, query: "${skuQuery.replace(/"/g, '\\"')}") {
+        edges {
+          node {
+            sku
+            image {
+              url
+            }
+            product {
+              id
+            }
+          }
+        }
+      }
+    }`
+
+    const response = await this.graphql<ShopifyGetSkuProductsResponseDTO>(query)
+
+    return response.data.productVariants.edges.map((edge) => ({
+      sku: edge.node.sku,
+      productId: edge.node.product.id,
+      imageUrl: edge.node.image?.url ?? null,
+    }))
   }
 }

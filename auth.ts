@@ -5,6 +5,7 @@ import { z } from 'zod'
 import {
   LoginUseCase as LoginUserUseCase,
   InvalidCredentialsError,
+  AccountBlockedError,
   UserRepository,
 } from '@/features/users'
 import { env } from '@/lib/env'
@@ -38,10 +39,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const useCase = new LoginUserUseCase(new UserRepository())
           return await useCase.execute(parsed.data.email, parsed.data.password)
         } catch (error) {
-          // Known domain error — wrong email or password
+          // Account is blocked - we need to signal this to the client
+          // Since NextAuth doesn't support custom error codes well, we'll check on client side
+          if (error instanceof AccountBlockedError) {
+            return null
+          }
+          // Invalid credentials
           if (error instanceof InvalidCredentialsError) return null
-          // Infrastructure error (DB down, timeout, etc.) — surface it to the client
-          // NextAuth will return { error: 'Configuration' } which LoginScreen detects
+          // Infrastructure error (DB down, timeout, etc.)
           throw error
         }
       },

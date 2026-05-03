@@ -1,6 +1,8 @@
 export interface InventoryLevelViewModel {
   locationName: string
+  committedQuantity: number
   availableQuantity: number
+  onHandQuantity: number
 }
 
 export interface ProductDetailVariantViewModel {
@@ -9,8 +11,14 @@ export interface ProductDetailVariantViewModel {
   sku: string
   barcode: string | null
   selectedOptions: { name: string; value: string }[]
+  imageUrl: string | null
   inventoryLevels: InventoryLevelViewModel[]
+  totalCommitted: number
   totalAvailable: number
+  totalOnHand: number
+  mbeStock: number | null
+  mbeCustomerOrder: number | null
+  mbeDisponibility: number | null
 }
 
 export interface GetProductDetailsViewModel {

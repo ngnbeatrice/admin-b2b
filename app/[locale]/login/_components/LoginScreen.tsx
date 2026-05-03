@@ -42,6 +42,25 @@ export function LoginScreen() {
     }
 
     if (result?.error) {
+      // Check if account is blocked after failed login
+      try {
+        const checkResponse = await fetch('/api/auth/check-blocked', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        })
+        const data = await checkResponse.json()
+
+        if (data.blocked) {
+          toast.error(t('accountBlocked'), {
+            duration: 5000,
+          })
+          return
+        }
+      } catch {
+        // If check fails, just show invalid credentials
+      }
+
       setError(t('invalidCredentials'))
       return
     }

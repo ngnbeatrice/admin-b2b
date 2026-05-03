@@ -166,16 +166,16 @@ export type UsersUserGroupsWhereInput = {
   userId?: Prisma.UuidFilter<"UsersUserGroups"> | string
   groupId?: Prisma.UuidFilter<"UsersUserGroups"> | string
   createdAt?: Prisma.DateTimeFilter<"UsersUserGroups"> | Date | string
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   group?: Prisma.XOR<Prisma.UserGroupScalarRelationFilter, Prisma.UserGroupWhereInput>
+  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
 export type UsersUserGroupsOrderByWithRelationInput = {
   userId?: Prisma.SortOrder
   groupId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  user?: Prisma.UserOrderByWithRelationInput
   group?: Prisma.UserGroupOrderByWithRelationInput
+  user?: Prisma.UserOrderByWithRelationInput
 }
 
 export type UsersUserGroupsWhereUniqueInput = Prisma.AtLeast<{
@@ -186,8 +186,8 @@ export type UsersUserGroupsWhereUniqueInput = Prisma.AtLeast<{
   userId?: Prisma.UuidFilter<"UsersUserGroups"> | string
   groupId?: Prisma.UuidFilter<"UsersUserGroups"> | string
   createdAt?: Prisma.DateTimeFilter<"UsersUserGroups"> | Date | string
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   group?: Prisma.XOR<Prisma.UserGroupScalarRelationFilter, Prisma.UserGroupWhereInput>
+  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "userId_groupId">
 
 export type UsersUserGroupsOrderByWithAggregationInput = {
@@ -210,8 +210,8 @@ export type UsersUserGroupsScalarWhereWithAggregatesInput = {
 
 export type UsersUserGroupsCreateInput = {
   createdAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutGroupsInput
   group: Prisma.UserGroupCreateNestedOneWithoutUsersInput
+  user: Prisma.UserCreateNestedOneWithoutGroupsInput
 }
 
 export type UsersUserGroupsUncheckedCreateInput = {
@@ -222,8 +222,8 @@ export type UsersUserGroupsUncheckedCreateInput = {
 
 export type UsersUserGroupsUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutGroupsNestedInput
   group?: Prisma.UserGroupUpdateOneRequiredWithoutUsersNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutGroupsNestedInput
 }
 
 export type UsersUserGroupsUncheckedUpdateInput = {
@@ -492,24 +492,24 @@ export type UsersUserGroupsSelect<ExtArgs extends runtime.Types.Extensions.Inter
   userId?: boolean
   groupId?: boolean
   createdAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   group?: boolean | Prisma.UserGroupDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["usersUserGroups"]>
 
 export type UsersUserGroupsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   userId?: boolean
   groupId?: boolean
   createdAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   group?: boolean | Prisma.UserGroupDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["usersUserGroups"]>
 
 export type UsersUserGroupsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   userId?: boolean
   groupId?: boolean
   createdAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   group?: boolean | Prisma.UserGroupDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["usersUserGroups"]>
 
 export type UsersUserGroupsSelectScalar = {
@@ -520,23 +520,23 @@ export type UsersUserGroupsSelectScalar = {
 
 export type UsersUserGroupsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"userId" | "groupId" | "createdAt", ExtArgs["result"]["usersUserGroups"]>
 export type UsersUserGroupsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   group?: boolean | Prisma.UserGroupDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type UsersUserGroupsIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   group?: boolean | Prisma.UserGroupDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type UsersUserGroupsIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   group?: boolean | Prisma.UserGroupDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 
 export type $UsersUserGroupsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "UsersUserGroups"
   objects: {
-    user: Prisma.$UserPayload<ExtArgs>
     group: Prisma.$UserGroupPayload<ExtArgs>
+    user: Prisma.$UserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     userId: string
@@ -936,8 +936,8 @@ readonly fields: UsersUserGroupsFieldRefs;
  */
 export interface Prisma__UsersUserGroupsClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   group<T extends Prisma.UserGroupDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserGroupDefaultArgs<ExtArgs>>): Prisma.Prisma__UserGroupClient<runtime.Types.Result.GetResult<Prisma.$UserGroupPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.

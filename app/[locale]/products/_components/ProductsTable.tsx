@@ -1,12 +1,12 @@
 'use client'
 
-import { DownloadIcon } from 'lucide-react'
+import { DownloadIcon, ExternalLinkIcon, EyeIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import { useMemo, useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,7 +28,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { PRODUCT_IMAGE_BLUR_DATA_URL } from '@/constants/images'
 import { Routes } from '@/constants/routes'
 import type { GetAllProductsViewModel } from '@/features/products'
+import { InventorySyncStatusUtil } from '@/features/products/utils/InventorySyncStatusUtil'
 import { Link } from '@/lib/navigation'
+import { TableExportService } from '@/utils/export'
 
 interface ProductsTableProps {
   readonly products: GetAllProductsViewModel[]
@@ -39,7 +41,9 @@ export function ProductsTable({ products }: ProductsTableProps) {
 
   const allSkus = useMemo(
     () =>
-      [...new Set(products.flatMap((p) => p.variants.map((v) => v.sku)).filter(Boolean))].sort(),
+      [
+        ...new Set(products.flatMap((p) => p.variants.map((v) => v.shopifySku)).filter(Boolean)),
+      ].sort(),
     [products]
   )
 
@@ -58,7 +62,7 @@ export function ProductsTable({ products }: ProductsTableProps) {
 
   const allVariantTitles = useMemo(
     () =>
-      [...new Set(products.flatMap((p) => p.variants.map((v) => v.title)))].sort((a, b) =>
+      [...new Set(products.flatMap((p) => p.variants.map((v) => v.shopifyTitle)))].sort((a, b) =>
         a.localeCompare(b)
       ),
     [products]
@@ -70,6 +74,8 @@ export function ProductsTable({ products }: ProductsTableProps) {
   const [tagInput, setTagInput] = useState('')
   const [variantInput, setVariantInput] = useState('')
   const [showOutOfStock, setShowOutOfStock] = useState(true)
+  const [showNotSynchronized, setShowNotSynchronized] = useState(false)
+  const [showArchived, setShowArchived] = useState(false)
 
   const filtered = useMemo(
     () =>
@@ -79,7 +85,9 @@ export function ProductsTable({ products }: ProductsTableProps) {
           p.title.toLowerCase().includes(titleInput.trim().toLowerCase())
         const skuMatch =
           skuInput.trim() === '' ||
-          p.variants.some((v) => v.sku?.toLowerCase().includes(skuInput.trim().toLowerCase()))
+          p.variants.some((v) =>
+            v.shopifySku?.toLowerCase().includes(skuInput.trim().toLowerCase())
+          )
         const collectionMatch =
           collectionInput.trim() === '' ||
           p.collections.some((c) =>
@@ -92,175 +100,146 @@ export function ProductsTable({ products }: ProductsTableProps) {
           variantInput.trim() === '' ||
           p.variants.some(
             (v) =>
-              v.title.toLowerCase().includes(variantInput.trim().toLowerCase()) &&
-              v.inventoryQuantity > 0
+              v.shopifyTitle.toLowerCase().includes(variantInput.trim().toLowerCase()) &&
+              v.shopifyInventoryQuantity > 0
           )
-        const stockMatch = showOutOfStock || p.inStock
-        return titleMatch && skuMatch && collectionMatch && tagMatch && variantMatch && stockMatch
+
+        // Calculate MBE total for stock filtering
+        const mbeValues = p.variants
+          .map((v) => v.mbeDisponibility)
+          .filter((val) => val !== null && val !== undefined) as number[]
+        const mbeTotal = mbeValues.length > 0 ? mbeValues.reduce((sum, val) => sum + val, 0) : null
+        const isInStock = mbeTotal !== null && mbeTotal > 0
+
+        const stockMatch = showOutOfStock || isInStock
+
+        // Synchronization check: check if any variant is not synchronized
+        const hasUnsynchronizedVariant = p.variants.some((v) => {
+          const shopifyQty = v.shopifyInventoryQuantity
+          const mbeQty = v.mbeDisponibility
+
+          // Skip if both are 0/null (considered synchronized)
+          if ((shopifyQty === 0 || shopifyQty === null) && (mbeQty === 0 || mbeQty === null)) {
+            return false
+          }
+
+          // Check if values differ
+          return shopifyQty !== mbeQty
+        })
+
+        const syncMatch = !showNotSynchronized || hasUnsynchronizedVariant
+
+        // Archived filter: hide archived products by default
+        const archivedMatch = showArchived || p.status !== 'ARCHIVED'
+
+        return (
+          titleMatch &&
+          skuMatch &&
+          collectionMatch &&
+          tagMatch &&
+          variantMatch &&
+          stockMatch &&
+          syncMatch &&
+          archivedMatch
+        )
       }),
-    [products, titleInput, skuInput, collectionInput, tagInput, variantInput, showOutOfStock]
+    [
+      products,
+      titleInput,
+      skuInput,
+      collectionInput,
+      tagInput,
+      variantInput,
+      showOutOfStock,
+      showNotSynchronized,
+      showArchived,
+    ]
   )
 
   function exportToCSV() {
-    const headers = [
-      t('columnProduct'),
-      t('columnCollections'),
-      t('columnVariants'),
-      t('columnTags'),
-      t('columnInventory'),
-    ]
+    // Flatten products into rows (one row per variant)
+    type FlatRow = {
+      product: GetAllProductsViewModel
+      variant: GetAllProductsViewModel['variants'][0]
+    }
 
-    const rows: string[][] = []
+    const flatRows: FlatRow[] = []
     filtered.forEach((p) => {
       p.variants.forEach((v) => {
-        rows.push([
-          p.title,
-          p.collections.map((c) => c.title).join(', '),
-          v.title,
-          p.tags.join(', '),
-          v.inventoryQuantity.toString(),
-        ])
+        flatRows.push({ product: p, variant: v })
       })
     })
 
-    const csvContent = [headers.join(';'), ...rows.map((row) => row.join(';'))].join('\n')
+    const columns = TableExportService.buildColumns<FlatRow>()
+      .addColumn(t('columnProduct'), (row) => row.product.title)
+      .addColumn(t('columnStatus'), (row) => row.product.status)
+      .addColumn(t('columnCollections'), (row) => row.product.collections.map((c) => c.title).join(', '))
+      .addColumn(t('columnVariants'), (row) => row.variant.shopifyTitle)
+      .addArrayColumn(t('columnTags'), (row) => row.product.tags)
+      .addColumn(t('columnShopifyQuantity'), (row) => row.variant.shopifyInventoryQuantity)
+      .addColumn(t('columnMbeQuantity'), (row) => row.variant.mbeDisponibility ?? 0)
+      .build()
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `products-${new Date().toISOString().split('T')[0]}.csv`
-    link.click()
-    URL.revokeObjectURL(link.href)
+    TableExportService.quickExport({
+      title: 'Products Export',
+      baseFilename: 'products_inventory',
+      columns,
+      data: flatRows,
+      format: 'csv',
+    })
   }
 
   function exportToHTML() {
+    // Flatten products into rows (one row per variant)
+    type FlatRow = {
+      product: GetAllProductsViewModel
+      variant: GetAllProductsViewModel['variants'][0]
+    }
+
+    const flatRows: FlatRow[] = []
+    filtered.forEach((p) => {
+      p.variants.forEach((v) => {
+        flatRows.push({ product: p, variant: v })
+      })
+    })
+
     const totalVariants = filtered.reduce((sum, p) => sum + p.variants.length, 0)
 
-    const htmlContent = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Products Export - ${new Date().toLocaleDateString()}</title>
-  <style>
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      margin: 40px;
-      background-color: #f0fdf4;
-      color: #1c1c1e;
-    }
-    h1 {
-      color: #047857;
-      margin-bottom: 10px;
-    }
-    .meta {
-      color: #6b7280;
-      margin-bottom: 30px;
-      font-size: 14px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    th {
-      background-color: #047857;
-      color: white;
-      padding: 12px;
-      text-align: left;
-      font-weight: 600;
-      font-size: 14px;
-    }
-    td {
-      padding: 12px;
-      border-bottom: 1px solid #d1fae5;
-      font-size: 14px;
-      vertical-align: middle;
-    }
-    tr:last-child td {
-      border-bottom: none;
-    }
-    tr:hover {
-      background-color: #f0fdf4;
-    }
-    .text-right {
-      text-align: right;
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .product-image {
-      width: 48px;
-      height: 48px;
-      object-fit: cover;
-      border-radius: 6px;
-      border: 1px solid #d1fae5;
-    }
-    .no-image {
-      width: 48px;
-      height: 48px;
-      border-radius: 6px;
-      border: 1px solid #d1fae5;
-      background-color: #f9fafb;
-      display: inline-block;
-    }
-  </style>
-</head>
-<body>
-  <h1>Products Export</h1>
-  <div class="meta">
-    <strong>Export Date:</strong> ${new Date().toLocaleString()}<br>
-    <strong>Total Products:</strong> ${filtered.length}<br>
-    <strong>Total Variants:</strong> ${totalVariants}
-  </div>
-  <table>
-    <thead>
-      <tr>
-        <th style="width: 64px;"></th>
-        <th>${t('columnProduct')}</th>
-        <th>${t('columnCollections')}</th>
-        <th>${t('columnVariants')}</th>
-        <th>${t('columnTags')}</th>
-        <th style="text-align: right;">${t('columnInventory')}</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${filtered
-        .flatMap((p) =>
-          p.variants.map(
-            (v) => `
-        <tr>
-          <td>
-            ${
-              p.featuredImageUrl
-                ? `<img src="${p.featuredImageUrl}" alt="${p.featuredImageAlt ?? p.title}" class="product-image" />`
-                : '<span class="no-image"></span>'
-            }
-          </td>
-          <td><strong>${p.title}</strong></td>
-          <td>${p.collections.map((c) => c.title).join(', ')}</td>
-          <td>${v.title}</td>
-          <td>${p.tags.join(', ')}</td>
-          <td class="text-right">${v.inventoryQuantity}</td>
-        </tr>
-      `
-          )
-        )
-        .join('')}
-    </tbody>
-  </table>
-</body>
-</html>
-    `
+    const columns = TableExportService.buildColumns<FlatRow>()
+      .addColumn('', () => '', { width: '64px' }) // Image column
+      .addColumn(t('columnProduct'), (row) => row.product.title)
+      .addColumn(t('columnStatus'), (row) => row.product.status)
+      .addColumn(t('columnCollections'), (row) => row.product.collections.map((c) => c.title).join(', '))
+      .addColumn(t('columnVariants'), (row) => row.variant.shopifyTitle)
+      .addArrayColumn(t('columnTags'), (row) => row.product.tags)
+      .addColumn(t('columnShopifyQuantity'), (row) => row.variant.shopifyInventoryQuantity, { className: 'text-right' })
+      .addColumn(t('columnMbeQuantity'), (row) => row.variant.mbeDisponibility ?? 0, { className: 'text-right' })
+      .build()
 
-    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `products-${new Date().toISOString().split('T')[0]}.html`
-    link.click()
-    URL.revokeObjectURL(link.href)
+    TableExportService.export({
+      title: 'Products Export',
+      baseFilename: 'products_inventory',
+      columns,
+      data: flatRows,
+      format: 'html',
+      metadata: {
+        'Export Date': new Date().toLocaleString(),
+        'Total Products': filtered.length,
+        'Total Variants': totalVariants,
+      },
+      factoryConfig: {
+        html: {
+          customCellRenderer: <T,>(row: T, columnIndex: number) => {
+            if (columnIndex !== 0) return null
+            const flatRow = row as FlatRow
+            if (flatRow.product.featuredImageUrl) {
+              return `<img src="${flatRow.product.featuredImageUrl}" alt="${flatRow.product.featuredImageAlt ?? flatRow.product.title}" class="product-image" />`
+            }
+            return '<span class="no-image"></span>'
+          },
+        },
+      },
+    })
   }
 
   return (
@@ -346,6 +325,24 @@ export function ProductsTable({ products }: ProductsTableProps) {
             </Label>
           </div>
 
+          <div className="flex items-center gap-2">
+            <Switch id="show-archived" checked={showArchived} onCheckedChange={setShowArchived} />
+            <Label htmlFor="show-archived" className="cursor-pointer text-sm">
+              {t('showArchived')}
+            </Label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Switch
+              id="show-not-synchronized"
+              checked={showNotSynchronized}
+              onCheckedChange={setShowNotSynchronized}
+            />
+            <Label htmlFor="show-not-synchronized" className="cursor-pointer text-sm">
+              {t('showNotSynchronized')}
+            </Label>
+          </div>
+
           <DropdownMenu>
             <DropdownMenuTrigger render={<Button variant="outline" size="sm" />}>
               <DownloadIcon className="mr-2 size-4" />
@@ -386,13 +383,12 @@ export function ProductsTable({ products }: ProductsTableProps) {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-16" />
-                <TableHead>{t('columnProduct')}</TableHead>
-                <TableHead>{t('columnCollections')}</TableHead>
-                <TableHead>{t('columnVariants')}</TableHead>
-                <TableHead className="w-32">{t('columnTags')}</TableHead>
-                <TableHead className="text-right">{t('columnInventory')}</TableHead>
-                <TableHead>{t('columnStatus')}</TableHead>
-                <TableHead className="w-20">{t('columnActions')}</TableHead>
+                <TableHead className="w-64">{t('columnProduct')}</TableHead>
+                <TableHead className="w-[80px]">{t('columnProductDetails')}</TableHead>
+                <TableHead className="w-[120px]">{t('columnStatus')}</TableHead>
+                <TableHead>{t('columnVariantsShopifyMbe')}</TableHead>
+                <TableHead className="text-right">{t('columnTotalShopifyMbe')}</TableHead>
+                <TableHead>{t('columnStockStatus')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -417,110 +413,141 @@ export function ProductsTable({ products }: ProductsTableProps) {
                     )}
                   </TableCell>
                   <TableCell className="font-medium">
-                    {product.title.length > 40 ? (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <span className="cursor-default">
-                                {product.title.slice(0, 40) + '…'}
-                              </span>
-                            }
-                          />
-                          <TooltipContent>{product.title}</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    ) : (
-                      product.title
-                    )}
+                    <div className="w-64 break-words whitespace-normal">{product.title}</div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground max-w-48 text-sm">
+                  <TableCell>
                     <TooltipProvider>
-                      <div className="flex flex-wrap gap-1">
-                        {product.collections.map((c) => {
-                          const isTruncated = c.title.length > 25
-                          const display = isTruncated ? c.title.slice(0, 25) + '…' : c.title
-                          return isTruncated ? (
-                            <Tooltip key={c.id}>
-                              <TooltipTrigger
-                                render={
-                                  <Badge variant="outline" className="cursor-default text-xs">
-                                    {display}
-                                  </Badge>
-                                }
-                              />
-                              <TooltipContent>{c.title}</TooltipContent>
-                            </Tooltip>
-                          ) : (
-                            <Badge key={c.id} variant="outline" className="text-xs">
-                              {display}
-                            </Badge>
-                          )
-                        })}
-                      </div>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={(props) => (
+                            <Link
+                              {...props}
+                              href={Routes.retailProduct(product.numericId)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:bg-accent hover:text-accent-foreground inline-flex h-9 w-9 items-center justify-center rounded-md"
+                            >
+                              <EyeIcon className="h-4 w-4" />
+                            </Link>
+                          )}
+                        />
+                        <TooltipContent>
+                          <p>{t('viewDetails')}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </TooltipProvider>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    <div className="flex flex-wrap gap-1">
-                      {product.variants.map((v) => (
-                        <Badge key={v.id} variant="outline" className="font-mono text-xs">
-                          {v.title}
-                          <span className="ml-1 opacity-60">({v.inventoryQuantity})</span>
-                        </Badge>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {product.tags.length > 0 ? (
-                      <TooltipProvider>
-                        <div className="flex flex-wrap gap-1">
-                          {product.tags.map((tag) => {
-                            const isTruncated = tag.length > 12
-                            const display = isTruncated ? tag.slice(0, 12) + '…' : tag
-                            return isTruncated ? (
-                              <Tooltip key={tag}>
-                                <TooltipTrigger
-                                  render={
-                                    <Badge variant="secondary" className="cursor-default text-xs">
-                                      {display}
-                                    </Badge>
-                                  }
-                                />
-                                <TooltipContent>{tag}</TooltipContent>
-                              </Tooltip>
-                            ) : (
-                              <Badge key={tag} variant="secondary" className="text-xs">
-                                {display}
-                              </Badge>
-                            )
-                          })}
-                        </div>
-                      </TooltipProvider>
-                    ) : (
-                      <span className="text-xs opacity-50">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right font-mono text-sm">
-                    {product.totalInventory}
                   </TableCell>
                   <TableCell>
                     <Badge
+                      variant="outline"
                       className={
-                        product.inStock
-                          ? 'bg-[var(--color-success)] text-white'
-                          : 'bg-[var(--color-error)] text-white'
+                        product.status === 'ACTIVE'
+                          ? 'border-[var(--color-success)] bg-[var(--color-success)]/10 text-[var(--color-success)]'
+                          : product.status === 'DRAFT'
+                            ? 'border-[var(--color-info)] bg-[var(--color-info)]/10 text-[var(--color-info)]'
+                            : product.status === 'ARCHIVED'
+                              ? 'border-[var(--color-muted)] bg-[var(--color-muted)]/10 text-[var(--color-muted)]'
+                              : 'border-[var(--color-warning)] bg-[var(--color-warning)]/10 text-[var(--color-warning)]'
                       }
                     >
-                      {product.inStock ? t('inStock') : t('outOfStock')}
+                      {product.status}
                     </Badge>
                   </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    <div className="flex flex-wrap gap-1">
+                      {product.variants.map((v) => {
+                        const shopifyQty =
+                          v.shopifyInventoryQuantity !== null &&
+                          v.shopifyInventoryQuantity !== undefined
+                            ? v.shopifyInventoryQuantity
+                            : null
+                        const mbeQty = v.mbeDisponibility
+
+                        // Get badge color class from utility
+                        const badgeClassName = `font-mono text-xs ${InventorySyncStatusUtil.getStatusClassName(shopifyQty, mbeQty)}`
+
+                        const hasCustomerOrder =
+                          v.mbeCustomerOrder !== null && v.mbeCustomerOrder > 0
+
+                        const badgeContent = (
+                          <>
+                            {v.shopifyTitle}
+                            <span className="ml-1 opacity-60">
+                              ({shopifyQty !== null ? shopifyQty : 'null'} /{' '}
+                              {mbeQty !== null ? mbeQty : 'null'})
+                            </span>
+                            {hasCustomerOrder && (
+                              <ExternalLinkIcon
+                                className="ml-1 size-3 opacity-70"
+                                strokeWidth={2.5}
+                              />
+                            )}
+                          </>
+                        )
+
+                        if (hasCustomerOrder && v.shopifySku) {
+                          return (
+                            <a
+                              key={v.id}
+                              href={`/b2b/mbe-order-history?sku=${encodeURIComponent(v.shopifySku)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-block"
+                            >
+                              <Badge variant="outline" className={badgeClassName}>
+                                {badgeContent}
+                              </Badge>
+                            </a>
+                          )
+                        }
+
+                        return (
+                          <Badge key={v.id} variant="outline" className={badgeClassName}>
+                            {badgeContent}
+                          </Badge>
+                        )
+                      })}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right font-mono text-sm">
+                    {(() => {
+                      // Calculate MBE total - only sum non-null values
+                      const mbeValues = product.variants
+                        .map((v) => v.mbeDisponibility)
+                        .filter((val) => val !== null && val !== undefined) as number[]
+                      const mbeTotal =
+                        mbeValues.length > 0 ? mbeValues.reduce((sum, val) => sum + val, 0) : null
+
+                      const shopifyTotal =
+                        product.totalInventory !== null && product.totalInventory !== undefined
+                          ? product.totalInventory
+                          : null
+                      const shopifyDisplay = shopifyTotal !== null ? shopifyTotal : 'null'
+                      const mbeDisplay = mbeTotal !== null ? mbeTotal : 'null'
+                      return `${shopifyDisplay} / ${mbeDisplay}`
+                    })()}
+                  </TableCell>
                   <TableCell>
-                    <Link
-                      href={Routes.retailProduct(product.numericId)}
-                      className={buttonVariants({ variant: 'outline', size: 'sm' })}
-                    >
-                      {t('viewDetails')}
-                    </Link>
+                    {(() => {
+                      // Calculate MBE total - only sum non-null values
+                      const mbeValues = product.variants
+                        .map((v) => v.mbeDisponibility)
+                        .filter((val) => val !== null && val !== undefined) as number[]
+                      const mbeTotal =
+                        mbeValues.length > 0 ? mbeValues.reduce((sum, val) => sum + val, 0) : null
+                      const isInStock = mbeTotal !== null && mbeTotal > 0
+                      return (
+                        <Badge
+                          className={
+                            isInStock
+                              ? 'bg-[var(--color-success)] text-white'
+                              : 'bg-[var(--color-error)] text-white'
+                          }
+                        >
+                          {isInStock ? t('inStock') : t('outOfStock')}
+                        </Badge>
+                      )
+                    })()}
                   </TableCell>
                 </TableRow>
               ))}

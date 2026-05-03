@@ -13,3 +13,5 @@ export type {
   InventoryLevelViewModel,
 } from './use-cases'
 export { ShopifyClient } from './client/ShopifyClient'
+export { MbeClient } from './client/MbeClient'
+export type { MbeProductVariant } from './service/types/MbeProductVariant'

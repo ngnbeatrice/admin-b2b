@@ -20,7 +20,13 @@ export interface ProductVariantDetail {
   sku: string
   barcode: string | null
   selectedOptions: { name: string; value: string }[]
-  inventoryLevels: { locationName: string; availableQuantity: number }[]
+  imageUrl: string | null
+  inventoryLevels: {
+    locationName: string
+    committedQuantity: number
+    availableQuantity: number
+    onHandQuantity: number
+  }[]
 }
 
 /** Domain object for the products list */
@@ -28,6 +34,7 @@ export class Product {
   constructor(
     readonly id: string,
     readonly title: string,
+    readonly status: 'ACTIVE' | 'ARCHIVED' | 'DRAFT' | 'UNLISTED',
     readonly tags: string[],
     readonly featuredImageUrl: string | null,
     readonly featuredImageAlt: string | null,

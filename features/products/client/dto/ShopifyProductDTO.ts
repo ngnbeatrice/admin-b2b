@@ -11,9 +11,17 @@ export interface ShopifyProductVariantDTO {
   id: string
   title: string
   sku: string
-  inventoryQuantity: number
   price: string
   image: { url: string } | null
+  inventoryItem: {
+    inventoryLevels: {
+      edges: {
+        node: {
+          quantities: { name: string; quantity: number }[]
+        }
+      }[]
+    }
+  }
 }
 
 export interface ShopifyProductVariantDetailDTO {
@@ -22,6 +30,7 @@ export interface ShopifyProductVariantDetailDTO {
   sku: string
   barcode: string | null
   selectedOptions: { name: string; value: string }[]
+  image: { url: string } | null
   inventoryItem: {
     inventoryLevels: {
       edges: {
@@ -37,6 +46,7 @@ export interface ShopifyProductVariantDetailDTO {
 export interface ShopifyProductDTO {
   id: string
   title: string
+  status: 'ACTIVE' | 'ARCHIVED' | 'DRAFT' | 'UNLISTED'
   tags: string[]
   featuredImage: { url: string; altText: string | null } | null
   collections: { edges: { node: ShopifyCollectionDTO }[] }
@@ -84,6 +94,26 @@ export interface ShopifyCheckSkuResponseDTO {
   data: {
     productVariants: {
       edges: { node: { id: string; sku: string } }[]
+    }
+  }
+}
+
+export interface ShopifySkuProductDTO {
+  sku: string
+  productId: string
+  imageUrl: string | null
+}
+
+export interface ShopifyGetSkuProductsResponseDTO {
+  data: {
+    productVariants: {
+      edges: {
+        node: {
+          sku: string
+          image: { url: string } | null
+          product: { id: string }
+        }
+      }[]
     }
   }
 }

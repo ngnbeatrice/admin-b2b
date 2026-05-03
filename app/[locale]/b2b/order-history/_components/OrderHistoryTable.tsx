@@ -55,6 +55,8 @@ export function OrderHistoryTable({ orders }: OrderHistoryTableProps) {
                     <TooltipTrigger>
                       <Link
                         href={`/b2b/orders/${order.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="hover:bg-accent hover:text-accent-foreground inline-flex h-9 w-9 items-center justify-center rounded-md"
                       >
                         <EyeIcon className="h-4 w-4" />

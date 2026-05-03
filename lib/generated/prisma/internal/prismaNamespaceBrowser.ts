@@ -56,14 +56,11 @@ export const ModelName = {
   UserScope: 'UserScope',
   UsersUserGroups: 'UsersUserGroups',
   UserGroupsUserScopes: 'UserGroupsUserScopes',
-  Color: 'Color',
-  Collection: 'Collection',
-  CollectionColors: 'CollectionColors',
-  Product: 'Product',
-  ProductCollections: 'ProductCollections',
-  ProductVariant: 'ProductVariant',
   Order: 'Order',
-  OrderItem: 'OrderItem'
+  OrderItem: 'OrderItem',
+  MbeOrder: 'MbeOrder',
+  MbeOrdersProduct: 'MbeOrdersProduct',
+  ApplicationProperties: 'ApplicationProperties'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -86,7 +83,12 @@ export const UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
   password: 'password',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  firstName: 'firstName',
+  lastName: 'lastName',
+  failedLoginAttempts: 'failedLoginAttempts',
+  blockedAt: 'blockedAt',
+  blockedBy: 'blockedBy'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -128,70 +130,6 @@ export const UserGroupsUserScopesScalarFieldEnum = {
 export type UserGroupsUserScopesScalarFieldEnum = (typeof UserGroupsUserScopesScalarFieldEnum)[keyof typeof UserGroupsUserScopesScalarFieldEnum]
 
 
-export const ColorScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  description: 'description',
-  imagePath: 'imagePath',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type ColorScalarFieldEnum = (typeof ColorScalarFieldEnum)[keyof typeof ColorScalarFieldEnum]
-
-
-export const CollectionScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  description: 'description',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type CollectionScalarFieldEnum = (typeof CollectionScalarFieldEnum)[keyof typeof CollectionScalarFieldEnum]
-
-
-export const CollectionColorsScalarFieldEnum = {
-  collectionId: 'collectionId',
-  colorId: 'colorId'
-} as const
-
-export type CollectionColorsScalarFieldEnum = (typeof CollectionColorsScalarFieldEnum)[keyof typeof CollectionColorsScalarFieldEnum]
-
-
-export const ProductScalarFieldEnum = {
-  id: 'id',
-  title: 'title',
-  description: 'description',
-  priceCents: 'priceCents',
-  imagePath: 'imagePath',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type ProductScalarFieldEnum = (typeof ProductScalarFieldEnum)[keyof typeof ProductScalarFieldEnum]
-
-
-export const ProductCollectionsScalarFieldEnum = {
-  productId: 'productId',
-  collectionId: 'collectionId'
-} as const
-
-export type ProductCollectionsScalarFieldEnum = (typeof ProductCollectionsScalarFieldEnum)[keyof typeof ProductCollectionsScalarFieldEnum]
-
-
-export const ProductVariantScalarFieldEnum = {
-  id: 'id',
-  productId: 'productId',
-  title: 'title',
-  sku: 'sku',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type ProductVariantScalarFieldEnum = (typeof ProductVariantScalarFieldEnum)[keyof typeof ProductVariantScalarFieldEnum]
-
-
 export const OrderScalarFieldEnum = {
   id: 'id',
   customerEmail: 'customerEmail',
@@ -211,16 +149,70 @@ export const OrderItemScalarFieldEnum = {
   orderId: 'orderId',
   productId: 'productId',
   productTitle: 'productTitle',
-  productImageUrl: 'productImageUrl',
   variantId: 'variantId',
   variantTitle: 'variantTitle',
   quantity: 'quantity',
   unitPrice: 'unitPrice',
   totalPrice: 'totalPrice',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  productImageUrl: 'productImageUrl'
 } as const
 
 export type OrderItemScalarFieldEnum = (typeof OrderItemScalarFieldEnum)[keyof typeof OrderItemScalarFieldEnum]
+
+
+export const MbeOrderScalarFieldEnum = {
+  mbeOrdersId: 'mbeOrdersId',
+  id: 'id',
+  num: 'num',
+  deposit: 'deposit',
+  departmentId: 'departmentId',
+  date: 'date',
+  reason: 'reason',
+  transport: 'transport',
+  portShipment: 'portShipment',
+  note: 'note',
+  operator: 'operator',
+  shippingPackages: 'shippingPackages',
+  trackingNumber: 'trackingNumber',
+  trackingNumberMbe: 'trackingNumberMbe',
+  state: 'state',
+  stateDescription: 'stateDescription',
+  workingState: 'workingState',
+  workingStateDescription: 'workingStateDescription',
+  creationTime: 'creationTime',
+  recipientCompanyName: 'recipientCompanyName',
+  recipient: 'recipient',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MbeOrderScalarFieldEnum = (typeof MbeOrderScalarFieldEnum)[keyof typeof MbeOrderScalarFieldEnum]
+
+
+export const MbeOrdersProductScalarFieldEnum = {
+  mbeOrdersProductsId: 'mbeOrdersProductsId',
+  orderId: 'orderId',
+  productId: 'productId',
+  sku: 'sku',
+  description: 'description',
+  quantity: 'quantity',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MbeOrdersProductScalarFieldEnum = (typeof MbeOrdersProductScalarFieldEnum)[keyof typeof MbeOrdersProductScalarFieldEnum]
+
+
+export const ApplicationPropertiesScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  value: 'value',
+  valueType: 'valueType',
+  createdAt: 'createdAt'
+} as const
+
+export type ApplicationPropertiesScalarFieldEnum = (typeof ApplicationPropertiesScalarFieldEnum)[keyof typeof ApplicationPropertiesScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -229,6 +221,14 @@ export const SortOrder = {
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const QueryMode = {
@@ -245,4 +245,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 

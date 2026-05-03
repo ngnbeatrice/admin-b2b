@@ -1,5 +1,13 @@
-import { ProductsScreen } from '@/app/[locale]/products/_components/ProductsScreen'
+import { redirect } from 'next/navigation'
 
-export default async function Page() {
+import { ProductsScreen } from '@/app/[locale]/products/_components/ProductsScreen'
+import { Routes } from '@/constants/routes'
+import { Scopes } from '@/constants/scopes'
+import { hasScopes } from '@/lib/auth-utils'
+
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  if (!(await hasScopes(Scopes.USERS_WRITE))) redirect(`/${locale}${Routes.unauthorized}`)
+
   return <ProductsScreen />
 }

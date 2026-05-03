@@ -24,18 +24,15 @@ interface BreadcrumbSegment {
   clickable: boolean
 }
 
-const GROUP_SEGMENTS = new Set(['retail', 'b2b', 'settings', 'ss27'])
+const GROUP_SEGMENTS = new Set(['retail', 'b2b', 'settings'])
 
 type NavKey =
   | 'retail'
   | 'inventory'
   | 'b2b'
-  | 'ss27'
-  | 'ss27Collections'
-  | 'ss27Products'
+  | 'mbeOrderHistory'
   | 'createOrder'
   | 'orderHistory'
-  | 'collections'
   | 'settings'
   | 'profile'
   | 'users'
@@ -45,8 +42,7 @@ type NavKey =
 const SEGMENT_KEY_MAP: Record<string, NavKey> = {
   retail: 'retail',
   b2b: 'b2b',
-  ss27: 'ss27',
-  collections: 'ss27Collections',
+  'mbe-order-history': 'mbeOrderHistory',
   'create-order': 'createOrder',
   'order-history': 'orderHistory',
   settings: 'settings',
@@ -71,14 +67,7 @@ export function AppShell({ children, sidebar }: AppShellProps) {
     parts.length === 0
       ? [{ label: t('home'), clickable: false }]
       : parts.map((part, index) => {
-          const prevPart = parts[index - 1]
-          // 'products' under retail → Inventory, under ss27 → SS27 products
-          let key: NavKey | undefined
-          if (part === 'products') {
-            key = prevPart === 'ss27' ? 'ss27Products' : 'inventory'
-          } else {
-            key = SEGMENT_KEY_MAP[part]
-          }
+          const key = part === 'products' ? 'inventory' : SEGMENT_KEY_MAP[part]
           const label = key ? t(key) : part
           const href = '/' + parts.slice(0, index + 1).join('/')
           const isLast = index === parts.length - 1

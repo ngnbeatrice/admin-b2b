@@ -4,6 +4,7 @@ export { GetUserScopesUseCase } from './GetUserScopesUseCase'
 export {
   LoginUserUseCase as LoginUseCase,
   InvalidCredentialsError,
+  AccountBlockedError,
   DatabaseError,
 } from './LoginUserUseCase'
 export { LogoutUserUseCase as LogoutUseCase } from './LogoutUserUseCase'

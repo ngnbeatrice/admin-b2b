@@ -10,7 +10,6 @@ export class ScopeMenuMapper {
     'users:read': { menuGroup: 'Settings', menu: 'Users' },
     'users:write': { menuGroup: 'Settings', menu: 'Users' },
     'users:delete': { menuGroup: 'Settings', menu: 'Users' },
-    'reports:read': { menuGroup: 'B2B', menu: 'SS27 Products' },
     'settings:write': { menuGroup: 'Settings', menu: 'Profile' },
   }
 

@@ -9,6 +9,11 @@ export class UserMapper {
     return new User(
       entity.id,
       entity.email,
+      entity.firstName,
+      entity.lastName,
+      entity.failedLoginAttempts,
+      entity.blockedAt,
+      entity.blockedBy,
       entity.createdAt,
       entity.groups.map((ug) => ({
         id: ug.group.id,
@@ -28,6 +33,12 @@ export class UserMapper {
       email: domain.email,
       groups: domain.groups.map((g) => g.name),
       scopes: domain.scopeNames,
+      failedLoginAttempts: domain.failedLoginAttempts,
+      blockedAt: domain.blockedAt
+        ? domain.blockedAt.toLocaleDateString(locale, { dateStyle: 'medium' })
+        : null,
+      blockedBy: domain.blockedBy,
+      isBlocked: domain.isBlocked,
       createdAt: domain.createdAt.toLocaleDateString(locale, { dateStyle: 'medium' }),
     }
   }
@@ -37,6 +48,10 @@ export class UserMapper {
     return {
       id: domain.id,
       email: domain.email,
+      firstName: domain.firstName,
+      lastName: domain.lastName,
+      fullName: domain.fullName,
+      displayName: domain.displayName,
       groups: domain.groups.map((g) => ({
         id: g.id,
         name: g.name,

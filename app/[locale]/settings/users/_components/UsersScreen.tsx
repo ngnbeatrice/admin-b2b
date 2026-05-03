@@ -1,3 +1,4 @@
+import { ShieldAlertIcon } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 
 import { Badge } from '@/components/ui/badge'
@@ -23,7 +24,7 @@ export async function UsersScreen({ locale }: UsersScreenProps) {
 
   return (
     <section className="flex flex-1 flex-col items-center p-6">
-      <Card className="w-full max-w-4xl">
+      <Card className="w-full max-w-6xl">
         <CardContent>
           <h2 className="text-foreground mb-4 text-base font-semibold">{t('title')}</h2>
           {users.length === 0 ? (
@@ -36,6 +37,10 @@ export async function UsersScreen({ locale }: UsersScreenProps) {
                     <TableHead>{t('columnEmail')}</TableHead>
                     <TableHead>{t('columnGroups')}</TableHead>
                     <TableHead>{t('columnScopes')}</TableHead>
+                    <TableHead>{t('columnFailedAttempts')}</TableHead>
+                    <TableHead>{t('columnStatus')}</TableHead>
+                    <TableHead>{t('columnBlockedDate')}</TableHead>
+                    <TableHead>{t('columnBlockedBy')}</TableHead>
                     <TableHead>{t('columnCreatedAt')}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -68,6 +73,33 @@ export async function UsersScreen({ locale }: UsersScreenProps) {
                         ) : (
                           <span className="text-xs opacity-50">—</span>
                         )}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {user.failedLoginAttempts > 0 ? (
+                          <span className="text-warning font-medium">
+                            {user.failedLoginAttempts}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">0</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {user.isBlocked ? (
+                          <Badge variant="destructive" className="flex w-fit items-center gap-1">
+                            <ShieldAlertIcon size={12} />
+                            {t('blocked')}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-success">
+                            {t('active')}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm">
+                        {user.blockedAt || <span className="text-xs opacity-50">—</span>}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm">
+                        {user.blockedBy || <span className="text-xs opacity-50">—</span>}
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {user.createdAt}

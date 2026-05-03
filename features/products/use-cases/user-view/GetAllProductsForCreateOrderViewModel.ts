@@ -1,10 +1,10 @@
 export interface ProductVariantForCreateOrderViewModel {
   id: string
-  title: string
-  sku: string
-  inventoryQuantity: number
-  price: string
-  imageUrl: string | null
+  shopifyTitle: string
+  shopifySku: string
+  shopifyInventoryQuantity: number
+  shopifyPrice: string
+  shopifyImageUrl: string | null
 }
 
 export interface GetAllProductsForCreateOrderViewModel {

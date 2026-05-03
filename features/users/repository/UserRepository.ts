@@ -8,6 +8,11 @@ export class UserRepository {
       select: {
         id: true,
         email: true,
+        firstName: true,
+        lastName: true,
+        failedLoginAttempts: true,
+        blockedAt: true,
+        blockedBy: true,
         createdAt: true,
         groups: {
           select: {
@@ -37,6 +42,8 @@ export class UserRepository {
       select: {
         id: true,
         email: true,
+        firstName: true,
+        lastName: true,
         createdAt: true,
         groups: {
           select: {
@@ -59,13 +66,49 @@ export class UserRepository {
     })
   }
 
-  /** Fetches user with password hash — only use for authentication. */
-  async findByEmailWithPassword(
+  /** Fetches user with password hash and security fields — only use for authentication. */
+  async findByEmailWithPassword(email: string): Promise<{
+    id: string
     email: string
-  ): Promise<{ id: string; email: string; password: string } | null> {
+    password: string
+    failedLoginAttempts: number
+    blockedAt: Date | null
+    blockedBy: string | null
+  } | null> {
     return prisma.user.findUnique({
       where: { email },
-      select: { id: true, email: true, password: true },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        failedLoginAttempts: true,
+        blockedAt: true,
+        blockedBy: true,
+      },
+    })
+  }
+
+  async incrementFailedLoginAttempts(userId: string): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { failedLoginAttempts: { increment: 1 } },
+    })
+  }
+
+  async resetFailedLoginAttempts(userId: string): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { failedLoginAttempts: 0 },
+    })
+  }
+
+  async blockUser(userId: string, blockedBy: string): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        blockedAt: new Date(),
+        blockedBy,
+      },
     })
   }
 
@@ -75,6 +118,8 @@ export class UserRepository {
       select: {
         id: true,
         email: true,
+        firstName: true,
+        lastName: true,
         createdAt: true,
         groups: {
           select: {

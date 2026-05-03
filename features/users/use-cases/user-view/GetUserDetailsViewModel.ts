@@ -2,6 +2,10 @@
 export interface GetUserDetailsViewModel {
   id: string
   email: string
+  firstName: string | null
+  lastName: string | null
+  fullName: string | null
+  displayName: string
   groups: Array<{
     id: string
     name: string

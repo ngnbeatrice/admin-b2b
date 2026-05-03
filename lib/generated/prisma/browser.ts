@@ -43,36 +43,6 @@ export type UsersUserGroups = Prisma.UsersUserGroupsModel
  */
 export type UserGroupsUserScopes = Prisma.UserGroupsUserScopesModel
 /**
- * Model Color
- * 
- */
-export type Color = Prisma.ColorModel
-/**
- * Model Collection
- * 
- */
-export type Collection = Prisma.CollectionModel
-/**
- * Model CollectionColors
- * 
- */
-export type CollectionColors = Prisma.CollectionColorsModel
-/**
- * Model Product
- * 
- */
-export type Product = Prisma.ProductModel
-/**
- * Model ProductCollections
- * 
- */
-export type ProductCollections = Prisma.ProductCollectionsModel
-/**
- * Model ProductVariant
- * 
- */
-export type ProductVariant = Prisma.ProductVariantModel
-/**
  * Model Order
  * 
  */
@@ -82,3 +52,18 @@ export type Order = Prisma.OrderModel
  * 
  */
 export type OrderItem = Prisma.OrderItemModel
+/**
+ * Model MbeOrder
+ * 
+ */
+export type MbeOrder = Prisma.MbeOrderModel
+/**
+ * Model MbeOrdersProduct
+ * 
+ */
+export type MbeOrdersProduct = Prisma.MbeOrdersProductModel
+/**
+ * Model ApplicationProperties
+ * 
+ */
+export type ApplicationProperties = Prisma.ApplicationPropertiesModel
