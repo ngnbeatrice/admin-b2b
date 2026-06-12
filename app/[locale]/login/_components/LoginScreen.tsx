@@ -79,7 +79,7 @@ export function LoginScreen() {
       </div>
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center gap-2">
-          <Logo size={48} />
+          <Logo size={256} />
           <span className="text-foreground text-xl font-bold">{APP_NAME}</span>
         </div>
         <Card>
