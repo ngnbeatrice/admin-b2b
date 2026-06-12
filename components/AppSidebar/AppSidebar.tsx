@@ -74,7 +74,7 @@ export function AppSidebar({ labels, ...props }: AppSidebarProps) {
     <Sidebar {...props}>
       <SidebarHeader>
         <Link href={Routes.home} className="flex items-center gap-3 px-2 py-3">
-          <Logo size={48} id="app-nav-bar-logo" />
+          <Logo size={96} id="app-nav-bar-logo" />
           <span
             id="app-nav-bar-title"
             className="text-sidebar-primary font-sans text-base font-bold"
